@@ -50,7 +50,7 @@ Phishing Guardian consolidates your entire phishing triage workflow into a singl
 │ │
 └─────────────────────────────────────────────────────────┘
 
-text
+text 
 
 But that undersells it. Here's everything it analyzes, automatically, without you touching a single external website:
 
