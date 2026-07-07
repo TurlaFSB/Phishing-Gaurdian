@@ -1,0 +1,58 @@
+# ============================================================
+# PHISHING GUARDIAN — GIT IGNORE
+# Files that should NEVER be committed to version control
+# ============================================================
+
+# --- ENVIRONMENT ---
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# --- PYTHON ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- CACHE ---
+data/cache/*
+!data/cache/.gitkeep
+
+# --- DATABASE ---
+data/db/*.db
+data/db/*.sqlite3
+
+# --- LOGS ---
+logs/*.log
+
+# --- REPORTS ---
+reports/*.pdf
+reports/*.html
+
+# --- DOCKER ---
+docker-compose.override.yml
+
+# --- COVERAGE ---
+.coverage
+htmlcov/
+.coverage.*
+
+# --- API KEYS (CRITICAL) ---
+*.pem
+*.key
+credentials.json
+service-account.json

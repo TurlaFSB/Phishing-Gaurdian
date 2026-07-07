@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis History — Phishing Guardian</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="/" class="navbar-brand">
+                <span class="icon">🛡️</span> Phishing Guardian
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/">Analyze</a></li>
+                <li><a href="/history" class="active">History</a></li>
+                <li><a href="/docs">API Docs</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="container">
+        <div class="header">
+            <h1>📊 Analysis History</h1>
+            <p>Your recent email analyses are stored locally in your browser. Nothing is sent to any server.</p>
+        </div>
+
+        <div class="card">
+            <div class="history-controls">
+                <input type="search" id="historySearch" placeholder="🔍 Search by subject or sender...">
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <div class="icon">📭</div>
+                <h3>No Analyses Yet</h3>
+                <p>Go to the <a href="/">Analyze page</a> to scan your first email.</p>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Subject</th>
+                            <th>Sender</th>
+                            <th>Risk</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Phishing Guardian v1.0.0 — History stored locally in your browser</p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

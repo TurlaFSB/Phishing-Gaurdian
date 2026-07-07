@@ -1,0 +1,21 @@
+# ============================================================
+# PHISHING GUARDIAN — DEVELOPMENT DEPENDENCIES
+# Install: pip install -r requirements-dev.txt
+# ============================================================
+
+-r requirements.txt
+
+# --- CODE QUALITY ---
+black==24.10.0
+isort==5.13.2
+flake8==7.1.1
+mypy==1.14.1
+pylint==3.3.3
+
+# --- PRE-COMMIT HOOKS ---
+pre-commit==4.0.1
+
+# --- TESTING EXTRAS ---
+pytest-mock==3.14.0
+pytest-timeout==2.3.1
+faker==33.1.0
