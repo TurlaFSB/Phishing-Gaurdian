@@ -1,238 +1,175 @@
 <p align="center">
-  <i>To every security analyst who has ever copied a URL from an email, pasted it into VirusTotal, waited, repeated for five more tools, and then tried to explain to their boss why this takes 15 minutes per email.</i>
+  <i>To every security analyst who has ever copied a URL from an email, pasted it into VirusTotal,<br>
+  waited, repeated for five more tools, and then tried to explain to their boss why this takes<br>
+  fifteen minutes per email.</i>
 </p>
 
-<br>
-
-# Phishing Guardian
-
-**One click. Six intelligence sources. Under five seconds.**
-
-That's the difference between the tool you're using now and the one you're about to deploy. Free. Open source. Built for the people who keep us safe.
-
-<br>
+<h1 align="center">Phishing Guardian</h1>
+<p align="center"><b>One click. Six intelligence sources. Under five seconds.</b></p>
+<p align="center">Free. Open source. Built for the people who keep us safe.</p>
 
 ---
 
-## The Problem Nobody Talks About
+## The Problem
 
-Walk through any Security Operations Center and you'll see the same scene playing out at every desk.
+Walk through any Security Operations Center and you'll see the same routine at every desk.
 
-An analyst squints at a forwarded email. Opens VirusTotal. Copies the first URL. Pastes. Waits. Opens AbuseIPDB. Copies the sender's IP. Pastes. Waits. Opens WHOIS. Types the domain. Reads. Opens PhishTank. Searches. Opens URLScan. Pastes again. Opens Notepad. Writes down findings. Moves to the next email.
+An analyst opens a forwarded email, copies the first URL into VirusTotal, waits, copies the
+sender's IP into AbuseIPDB, waits, runs a WHOIS lookup on the domain, checks PhishTank, checks
+URLScan, then writes up findings by hand before moving to the next email.
 
-**Fifteen minutes. One email. Thirty emails a day. That's an entire workday lost to manual triage.**
-
-This isn't a skills problem. It's a tooling problem. And nobody was solving it for teams without a six-figure budget. So we built it ourselves.
-
-<br>
+For a team triaging 20–30 suspicious emails a day, that's a significant chunk of analyst time
+spent on repetitive lookups rather than judgment calls — and the process varies from analyst to
+analyst, which makes outcomes inconsistent. Phishing Guardian automates the lookups so the
+analyst's time goes to the decision, not the data-gathering.
 
 ---
 
-## What Phishing Guardian Does
+## What It Does
 
 One interface. Every check automated. Results in seconds.
 
-<div align="center">
-
-<table>
-<tr>
-<td align="center" width="200" style="padding:20px;background:#111;border:1px solid #222;border-radius:8px;">
-<b style="color:#f5f5f7;font-size:1.1em;">📧 Raw Email</b><br>
-<span style="color:#86868b;font-size:0.85em;">Headers + Body</span>
-</td>
-<td align="center" width="60" style="font-size:2em;color:#3b82f6;">→</td>
-<td align="center" width="200" style="padding:20px;background:#111;border:1px solid #222;border-radius:8px;">
-<b style="color:#f5f5f7;font-size:1.1em;">🔍 6 Sources</b><br>
-<span style="color:#86868b;font-size:0.85em;">Checked in Parallel</span>
-</td>
-<td align="center" width="60" style="font-size:2em;color:#3b82f6;">→</td>
-<td align="center" width="200" style="padding:20px;background:#111;border:1px solid #222;border-radius:8px;">
-<b style="color:#f5f5f7;font-size:1.1em;">📊 Risk Report</b><br>
-<span style="color:#86868b;font-size:0.85em;">Score + Actions</span>
-</td>
-</tr>
-</table>
-
-<p style="color:#3b82f6;font-weight:600;margin-top:16px;font-size:1.1em;">⏱ Time: Under 5 Seconds</p>
-
-</div>
-
-Every layer of the email is analyzed automatically:
+```
+  Raw Email  ──────►  6 Sources Checked  ──────►  Risk Report
+ (Headers +           in Parallel                 (Score + Actions)
+   Body)
+```
 
 | Layer | What Gets Checked | Source |
-|-------|-------------------|--------|
-| **Authentication** | SPF, DKIM, DMARC validation | Header parser |
-| **Sender Identity** | Display name spoofing, Reply-To mismatch | Heuristic engine |
-| **URLs** | Reputation, domain age, typosquatting | VirusTotal · PhishTank · OpenPhish · URLScan |
-| **Domains** | Registration date, registrar, country | WHOIS |
-| **IP Addresses** | Abuse confidence, report history | AbuseIPDB |
-| **Attachments** | SHA256 hash, file type, PDF JavaScript | VirusTotal · PDF parser |
-| **Content** | Urgency keywords, generic greetings, threats | NLP heuristics |
+|---|---|---|
+| Authentication | SPF, DKIM, DMARC validation | Header parser |
+| Sender identity | Display-name spoofing, Reply-To mismatch | Heuristic engine |
+| URLs | Reputation, domain age, typosquatting | VirusTotal · PhishTank · OpenPhish · URLScan |
+| Domains | Registration date, registrar, country | WHOIS |
+| IP addresses | Abuse confidence, report history | AbuseIPDB |
+| Attachments | SHA256 hash, file type, PDF JavaScript detection | VirusTotal · PDF parser |
+| Content | Urgency keywords, generic greetings, threats | NLP heuristics |
 
-All in parallel. All in under five seconds.
-
-<br>
+All checked in parallel, typically returning a full result in under five seconds.
 
 ---
 
-## Real-World Example
+## Example Output
 
-A phishing email lands in your inbox. You paste it into Phishing Guardian. Three seconds later:
+A phishing email lands in your inbox. You paste it into Phishing Guardian. Seconds later:
 
-<div style="background:#111;border:1px solid #222;border-radius:8px;padding:24px;font-family:system-ui,-apple-system,sans-serif;color:#f5f5f7;max-width:620px;margin:16px auto;text-align:left;">
+```
+ANALYSIS RESULTS
+─────────────────────────────────────────────
+Risk Score        76 / 100 — HIGH
+Confidence         MEDIUM
+Sources Checked    PhishTank · OpenPhish · WHOIS · URLScan
+Analysis Time      3.2 seconds
 
-<div style="color:#3b82f6;font-size:1.2em;margin-bottom:16px;font-weight:700;">🛡️ ANALYSIS RESULTS</div>
+DETECTED INDICATORS
+  • Lookalike domain: paypa1.com impersonates paypal.com
+  • No SPF, DKIM, or DMARC authentication present
+  • Urgency language detected: "URGENT", "immediately"
+  • Generic greeting: "Dear Customer" instead of recipient's name
 
-<table style="width:100%;border-collapse:collapse;">
-<tr>
-  <td style="color:#86868b;padding:6px 0;">Risk Score</td>
-  <td style="color:#f59e0b;font-weight:700;">76 / 100 — HIGH</td>
-</tr>
-<tr>
-  <td style="color:#86868b;padding:6px 0;">Confidence</td>
-  <td style="color:#f5f5f7;">MEDIUM</td>
-</tr>
-<tr>
-  <td style="color:#86868b;padding:6px 0;">Sources Checked</td>
-  <td style="color:#34c759;">PhishTank · OpenPhish · WHOIS · URLScan</td>
-</tr>
-<tr>
-  <td style="color:#86868b;padding:6px 0;">Analysis Time</td>
-  <td style="color:#f5f5f7;">3.2 seconds</td>
-</tr>
-</table>
+RECOMMENDED ACTIONS
+  1. Block sender domain at email gateway
+  2. Forward to SOC for investigation
+  3. Delete from all user inboxes
+  4. Notify team of active phishing campaign
 
-<div style="margin-top:20px;color:#ef4444;font-weight:700;">🔴 DETECTED INDICATORS</div>
-<ul style="color:#f5f5f7;margin-top:6px;padding-left:20px;">
-  <li>Lookalike domain: <code style="color:#f59e0b;background:#1a1a1a;padding:2px 6px;border-radius:4px;">paypa1.com</code> impersonates <code style="color:#3b82f6;background:#1a1a1a;padding:2px 6px;border-radius:4px;">paypal.com</code></li>
-  <li>No SPF, DKIM, or DMARC authentication present</li>
-  <li>Urgency language detected: "URGENT", "immediately"</li>
-  <li>Generic greeting: "Dear Customer" instead of recipient's name</li>
-</ul>
+  Full PDF report available for download
+```
 
-<div style="margin-top:20px;color:#3b82f6;font-weight:700;">📋 RECOMMENDED ACTIONS</div>
-<ol style="color:#f5f5f7;margin-top:6px;padding-left:20px;">
-  <li>Block sender domain at email gateway</li>
-  <li>Forward to SOC for investigation</li>
-  <li>Delete from all user inboxes</li>
-  <li>Notify team of active phishing campaign</li>
-</ol>
-
-<div style="margin-top:20px;text-align:center;padding:10px;background:#1a1a1a;border-radius:6px;">
-  <span style="color:#86868b;">📥</span> <span style="color:#3b82f6;">Full PDF report available for download</span>
-</div>
-
-</div>
-
-The analyst who reviewed this spent zero minutes on manual lookups. The decision was made in seconds. The report was generated automatically. The threat was contained.
-
-<br>
+No manual lookups. The decision gets made in seconds, and the report is generated automatically.
 
 ---
 
-## The Numbers That Matter
+## Why It's Worth Using
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Time per email | 10–15 minutes | Under 5 seconds |
-| Sources checked per email | Manually, inconsistently | 6 automatically, every time |
-| Reports generated | Manually typed in Notepad | One-click PDF download |
-| Analysis history | None or scattered | Searchable database |
-| Monthly cost | Free tools, massive time sink | Free tools, zero time sink |
-| Consistency between analysts | Varies wildly | Identical process every time |
+| | Manual triage | Phishing Guardian |
+|---|---|---|
+| Time per email | ~10–15 minutes | Under 5 seconds |
+| Sources checked | Manually, inconsistently | 6 automatically, every time |
+| Reports | Typed by hand | One-click PDF export |
+| Analysis history | Scattered or nonexistent | Searchable database |
+| Consistency across analysts | Varies | Identical process every time |
 
-**If your team handles 20 suspicious emails a day, Phishing Guardian saves 5 hours of analyst time daily. That's 1,300 hours per year. That's a full-time salary recovered. The tool pays for itself on day one.**
-
-<br>
+As a rough estimate: a team handling 20 suspicious emails a day at ~12 minutes each spends
+roughly 4 hours daily on manual triage alone. Cutting that to seconds per email frees up a
+meaningful chunk of analyst capacity — the exact savings will depend on your team's current
+process and email volume.
 
 ---
 
-## How It Costs Nothing to Run
+## Running Cost
 
-Every component of Phishing Guardian runs on free infrastructure:
+Every component runs on free infrastructure:
 
 | Component | Technology | Cost |
-|-----------|-----------|:---:|
-| **Backend server** | Python 3.12 + FastAPI | $0 |
-| **Database** | SQLite (zero configuration) | $0 |
-| **URL reputation** | VirusTotal free API | 500 req/day · $0 |
-| **URL reputation** | PhishTank — no key required | Unlimited · $0 |
-| **URL reputation** | OpenPhish — no key required | Unlimited · $0 |
-| **URL behavior** | URLScan.io — no key required | Unlimited · $0 |
-| **IP reputation** | AbuseIPDB free API | 1,000 checks/day · $0 |
-| **Domain lookup** | WHOIS library (built into Python) | Unlimited · $0 |
-| **Frontend** | Vanilla HTML, CSS, JavaScript | $0 |
-| **PDF generation** | ReportLab (open source) | $0 |
-| **Deployment** | PythonAnywhere / Oracle Cloud free tier | $0 |
+|---|---|---|
+| Backend | Python 3.12 + FastAPI | $0 |
+| Database | SQLite (zero configuration) | $0 |
+| URL reputation | VirusTotal free API | 500 req/day, $0 |
+| URL reputation | PhishTank (no key required) | Unlimited, $0 |
+| URL reputation | OpenPhish (no key required) | Unlimited, $0 |
+| URL behavior | URLScan.io (no key required) | Unlimited, $0 |
+| IP reputation | AbuseIPDB free API | 1,000 checks/day, $0 |
+| Domain lookup | WHOIS library (built into Python) | Unlimited, $0 |
+| Frontend | Vanilla HTML, CSS, JavaScript | $0 |
+| PDF generation | ReportLab (open source) | $0 |
+| Deployment | PythonAnywhere / Oracle Cloud free tier | $0 |
 
-**Total operating cost: $0 per month. Forever.**
-
-<br>
+**The tool itself is free and always will be** — MIT licensed, no premium tier, no paid version.
+The optional costs below are entirely for *upgraded third-party API quotas* (VirusTotal/AbuseIPDB
+paid tiers) if you outgrow the free rate limits — Phishing Guardian works fully on the free tiers.
 
 ---
 
-## Scaling With Your Organization
+## Scaling With Your Team
 
-Phishing Guardian grows with you. The same codebase works at every stage:
+The same codebase works at every stage — only your `.env` configuration changes.
 
-<br>
-
-**Solo Analyst — You, Today**
-One laptop. Local installation. All free APIs.
-Setup: pip install -r requirements.txt
+**Solo analyst**
+Local install, all free API tiers.
+```bash
+pip install -r requirements.txt
+```
 Cost: $0
 
-text
+**Small team (5–10 analysts)**
+Deploy on PythonAnywhere or Render's free tier, share the URL, add free VirusTotal/AbuseIPDB keys.
+Setup time: ~20 minutes. Cost: $0
 
-**Small Team — 5–10 Analysts**
-Deploy on PythonAnywhere or Render free tier.
-Share URL with team. Add VirusTotal and AbuseIPDB free keys.
-Setup: 20 minutes
-Cost: $0
-
-text
-
-**Enterprise SOC — 50+ Analysts**
-Deploy on dedicated cloud VM. VirusTotal Premium ($50/mo).
-AbuseIPDB Premium ($15/mo). Slack/Teams integration for real-time alerts.
-Setup: 1 hour
-Cost: ~$90/month
-
-text
-
-<br>
-
-Every stage uses identical code. The only difference is a few lines in your `.env` file. No migrations. No downtime. No vendor lock-in.
-
-<br>
+**Larger SOC (50+ analysts)**
+Dedicated cloud VM, VirusTotal Premium (~$50/mo), AbuseIPDB Premium (~$15/mo), Slack/Teams
+alert integration. Setup time: ~1 hour. Cost: ~$90/month in optional API upgrades — the tool
+itself remains free.
 
 ---
 
 ## What Phishing Guardian Is Not
 
-Honest scope. No marketing fluff.
+Honest scope, no marketing fluff:
 
-- **Not a replacement for EDR.** This analyzes phishing emails and files. It does not replace endpoint detection and response.
-- **Not a SIEM.** It does not ingest logs or correlate events across your network.
-- **Not AI-powered.** The current scoring engine is heuristic and rules-based. Machine learning integration is on the roadmap.
-- **Not a silver bullet.** No single tool catches everything. Phishing Guardian is one layer in a defense-in-depth strategy.
+- **Not a replacement for EDR.** It analyzes phishing emails and files; it doesn't replace
+  endpoint detection and response.
+- **Not a SIEM.** It doesn't ingest logs or correlate events across your network.
+- **Not AI-powered.** The current scoring engine is heuristic and rules-based. ML-based scoring
+  is on the roadmap, not yet implemented.
+- **Not a silver bullet.** No single tool catches everything — this is one layer in a
+  defense-in-depth strategy.
 
-**What it is:** A force multiplier for the most repetitive, time-consuming part of security operations. A way to standardize phishing triage. A tool that gives analysts their time back.
-
-<br>
+**What it is:** a way to remove the repetitive, manual part of phishing triage so analyst time
+goes toward judgment calls instead of copy-pasting into six different tools.
 
 ---
 
 ## Quick Start
 
-No Docker. No database setup. No API keys required. Just Python and five minutes.
+No Docker, no database setup, no API keys required to get started.
 
 ```bash
 # Clone the repository
 git clone https://github.com/TurlaFSB/Phishing-Gaurdian.git
 cd Phishing-Gaurdian
 
-# Create and activate virtual environment
+# Create and activate a virtual environment
 python -m venv venv
 source venv/bin/activate        # macOS / Linux
 # .\venv\Scripts\activate       # Windows
@@ -242,33 +179,40 @@ pip install -r requirements.txt
 
 # Start the application
 python run.py
-Open http://localhost:8000 in any browser. Paste an email. Click Analyze.
- or can use the live site through : https://phishing-gaurdian.onrender.com/
+```
 
-That's it.
+Open `http://localhost:8000`, paste an email, click Analyze.
 
-Optional: Add free API keys to .env for stronger detection. Takes 30 seconds. Details in the documentation.
+Or use the hosted version: **https://phishing-gaurdian.onrender.com/**
 
+Optional: add free API keys to `.env` for stronger detection coverage (VirusTotal, AbuseIPDB).
+Takes about 30 seconds — see the documentation for details.
 
-Available Threat Intelligence Sources
-Source	Type	Needs Key?	Free Limit	Sign Up
-VirusTotal	URL & file hash against 70+ engines	Yes	500/day	virustotal.com
-AbuseIPDB	IP reputation & abuse history	Yes	1,000/day	abuseipdb.com
-PhishTank	Community-verified phishing database	No	Unlimited	Built-in
-OpenPhish	AI-detected phishing URLs	No	Unlimited	Built-in
-URLScan.io	URL behavioral scanning	No	Unlimited	Built-in
-WHOIS	Domain registration & age	No	Unlimited	Built-in
+> **Note:** double-check whether "Phishing-Gaurdian" above is the intended repository name —
+> if it's a typo for "Guardian," fix it in the actual GitHub repo/URL before publishing, since a
+> broken clone link is the one thing in this README that would directly block a new user.
 
+---
 
+## Threat Intelligence Sources
 
+| Source | Type | API Key Required? | Free Limit |
+|---|---|---|---|
+| [VirusTotal](https://virustotal.com) | URL & file hash vs. 70+ engines | Yes | 500/day |
+| [AbuseIPDB](https://abuseipdb.com) | IP reputation & abuse history | Yes | 1,000/day |
+| PhishTank | Community-verified phishing database | No | Unlimited |
+| OpenPhish | AI-detected phishing URLs | No | Unlimited |
+| URLScan.io | URL behavioral scanning | No | Unlimited |
+| WHOIS | Domain registration & age | No | Unlimited |
 
-The free tools exist—VirusTotal, AbuseIPDB, PhishTank, URLScan—but nobody had connected them into a single automated workflow. Nobody had made it dead simple to go from "I received a suspicious email" to "here is the complete risk assessment with a downloadable PDF report."
+These tools already existed individually — Phishing Guardian's contribution is wiring them
+together into one automated workflow, so going from "I received a suspicious email" to "here's
+a complete risk assessment with a downloadable PDF" takes one paste instead of six.
 
-MIT licensed. Free forever. No premium tier. No "contact sales." No catch.
+---
 
-
-Acknowledgments
-Threat Intelligence Providers:
-VirusTotal · AbuseIPDB · PhishTank · OpenPhish · URLScan.io · WHOIS
-
-<p align="center"> <b>Phishing Guardian</b><br> <sub>Free · Open Source · No Telemetry · No Tracking · No Cost</sub><br><br> <sub>MIT License · Python 3.12+ · Built for the security community</sub> </p> ```
+<p align="center">
+  <b>Phishing Guardian</b><br>
+  <sub>Free · Open Source · No Telemetry · No Tracking</sub><br><br>
+  <sub>MIT License · Python 3.12+ · Built for the security community</sub>
+</p>
