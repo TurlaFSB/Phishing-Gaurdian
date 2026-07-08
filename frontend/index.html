@@ -3,483 +3,662 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phishing Guardian — Free Email & File Analysis</title>
+    <title>Phishing Guardian — Enterprise Threat Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
-        /* ── DROP ZONE ── */
-        .drop-zone {
-            border: 2px dashed var(--border-primary);
-            border-radius: var(--radius-lg);
-            padding: 48px 24px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-top: 10px;
-            background: var(--bg-input);
-        }
-        .drop-zone:hover,
-        .drop-zone.dragover {
-            border-color: var(--accent-blue);
-            background: rgba(88, 166, 255, 0.06);
-            transform: scale(1.01);
-        }
-        .drop-zone .icon {
-            font-size: 3em;
-            margin-bottom: 12px;
-            animation: float 3s ease-in-out infinite;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
-        }
-        .drop-zone p { color: var(--text-secondary); margin: 6px 0; }
-        .drop-zone .supported-types { color: var(--text-muted); font-size: 0.8em; margin-top: 8px; }
+        /* ================================================================
+           PHISHING GUARDIAN — DESIGN SYSTEM
+           Token plan:
+             Color   — near-black canvas (#000/#0a0a0b), elevated glass
+                       panels (#1c1c1e / #232326), Apple system accent
+                       blue (#0a84ff), semantic red/orange/green matched
+                       to iOS system colors so severity reads instantly.
+             Type    — the actual San Francisco stack (-apple-system,
+                       BlinkMacSystemFont) for every UI label and score,
+                       ui-monospace/SF Mono for hashes, headers, raw data.
+             Layout  — Settings.app-style grouped inset rows instead of
+                       a scattered card grid; a single Activity-ring style
+                       hero score instead of a flat filled circle.
+             Signature — the risk gauge: a two-tone conic-gradient ring
+                       that sweeps to the score, the one bold visual
+                       moment; everything else stays quiet and disciplined.
+           ================================================================ */
+        :root {
+            --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+            --font-mono: ui-monospace, 'SF Mono', 'Menlo', 'Consolas', monospace;
 
-        /* ── FILE INFO ── */
-        #fileInfo {
-            display: none;
-            margin-top: 14px;
-            padding: 14px 16px;
-            background: var(--bg-tertiary);
-            border-radius: var(--radius-md);
-            align-items: center;
-            gap: 12px;
-            border: 1px solid var(--border-primary);
+            --bg-canvas: #000000;
+            --bg-panel: #1c1c1e;
+            --bg-panel-2: #232325;
+            --bg-row: #17171a;
+            --bg-row-alt: #1a1a1d;
+            --bg-input: #17171a;
+            --sep: rgba(84,84,88,0.42);
+            --sep-strong: rgba(84,84,88,0.65);
+
+            --text-1: #f5f5f7;
+            --text-2: rgba(235,235,245,0.62);
+            --text-3: rgba(235,235,245,0.32);
+
+            --blue: #0a84ff;
+            --blue-dim: rgba(10,132,255,0.14);
+            --red: #ff453a;
+            --red-dim: rgba(255,69,58,0.14);
+            --orange: #ff9f0a;
+            --orange-dim: rgba(255,159,10,0.14);
+            --green: #32d74b;
+            --green-dim: rgba(50,215,75,0.14);
+            --purple: #bf5af2;
+
+            --radius-xl: 22px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
         }
+
+        * { box-sizing: border-box; }
+        html { background: var(--bg-canvas); }
+        body {
+            font-family: var(--font-sans);
+            background: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(10,132,255,0.08), transparent 60%), var(--bg-canvas);
+            color: var(--text-1);
+            letter-spacing: -0.011em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            min-height: 100vh;
+        }
+
+        /* ── NAV ── */
+        .navbar { background: rgba(0,0,0,0.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--sep); position: sticky; top: 0; z-index: 50; }
+        .navbar-inner { max-width: 980px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; }
+        .navbar-brand { color: var(--text-1); font-weight: 600; font-size: 0.98em; text-decoration: none; display: flex; align-items: center; gap: 8px; letter-spacing: -0.015em; }
+        .navbar-nav { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; }
+        .navbar-nav a { color: var(--text-2); text-decoration: none; font-size: 0.86em; font-weight: 500; transition: color 0.15s ease; }
+        .navbar-nav a:hover, .navbar-nav a.active { color: var(--text-1); }
+
+        /* ── HEADER / HERO COPY ── */
+        .container { max-width: 780px; margin: 0 auto; padding: 64px 24px 80px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: 2.6em; font-weight: 700; letter-spacing: -0.03em; margin: 0 0 10px; background: linear-gradient(180deg, #ffffff 0%, #b6b6bc 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: var(--text-2); font-size: 1.05em; margin: 0 0 20px; font-weight: 400; }
+        .badges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .badge { background: var(--bg-panel); border: 1px solid var(--sep); color: var(--text-2); padding: 6px 14px; border-radius: 100px; font-size: 0.76em; font-weight: 500; letter-spacing: -0.005em; }
+
+        /* ── CARD (glass panel) ── */
+        .card { background: var(--bg-panel); border: 1px solid var(--sep); border-radius: var(--radius-xl); padding: 8px 24px 24px; box-shadow: 0 20px 60px -20px rgba(0,0,0,0.6); }
+
+        textarea#emailInput { width: 100%; min-height: 220px; resize: vertical; background: var(--bg-input); border: 1px solid var(--sep); border-radius: var(--radius-md); color: var(--text-1); padding: 16px; font-size: 0.88em; font-family: var(--font-mono); line-height: 1.55; margin-top: 4px; }
+        textarea#emailInput::placeholder { color: var(--text-3); }
+        textarea#emailInput:focus, .drop-zone:focus-visible, .tab-btn:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 16px; }
+        .btn { border: none; border-radius: var(--radius-sm); padding: 11px 22px; font-size: 0.88em; font-weight: 600; font-family: var(--font-sans); letter-spacing: -0.01em; cursor: pointer; transition: transform 0.12s ease, background 0.15s ease, opacity 0.15s ease; }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-primary { background: var(--blue); color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: #2b95ff; }
+        .btn-secondary { background: var(--bg-panel-2); color: var(--text-1); border: 1px solid var(--sep); }
+        .btn-secondary:hover { background: #29292c; }
+
+        /* ── DROP ZONE ── */
+        .drop-zone { border: 1.5px dashed var(--sep-strong); border-radius: var(--radius-lg); padding: 44px 24px; text-align: center; transition: all 0.25s ease; cursor: pointer; margin-top: 10px; background: var(--bg-input); }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--blue); background: var(--blue-dim); }
+        .drop-zone .icon { font-size: 2.6em; margin-bottom: 10px; opacity: 0.9; }
+        .drop-zone p { color: var(--text-2); margin: 5px 0; font-size: 0.92em; }
+        .drop-zone p strong { color: var(--text-1); }
+        .drop-zone .supported-types { color: var(--text-3); font-size: 0.78em; margin-top: 6px; }
+
+        #fileInfo { display: none; margin-top: 14px; padding: 13px 16px; background: var(--bg-row); border-radius: var(--radius-md); align-items: center; gap: 12px; border: 1px solid var(--sep); }
         #fileInfo.visible { display: flex; }
-        #fileInfo .file-icon { font-size: 1.6em; }
-        #fileInfo .file-name { flex: 1; font-weight: 600; color: var(--text-primary); }
-        #fileInfo .file-size { color: var(--text-secondary); font-size: 0.85em; }
-        #fileInfo .remove-file {
-            background: var(--btn-danger);
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.85em;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-        #fileInfo .remove-file:hover { background: #f85149; }
+        #fileInfo .file-icon { font-size: 1.4em; }
+        #fileInfo .file-name { flex: 1; font-weight: 600; color: var(--text-1); font-size: 0.9em; }
+        #fileInfo .file-size { color: var(--text-2); font-size: 0.82em; font-family: var(--font-mono); }
+        #fileInfo .remove-file { background: transparent; color: var(--red); border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: background 0.15s ease; }
+        #fileInfo .remove-file:hover { background: var(--red-dim); }
 
         /* ── TABS ── */
-        .tabs {
-            display: flex;
-            gap: 0;
-            margin-bottom: 0;
-            border-bottom: 2px solid var(--border-primary);
-        }
-        .tab-btn {
-            padding: 12px 24px;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 500;
-            transition: all 0.25s ease;
-            position: relative;
-            font-family: var(--font-sans);
-        }
-        .tab-btn:hover { color: var(--text-primary); }
-        .tab-btn.active {
-            color: var(--accent-blue);
-            font-weight: 600;
-        }
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--accent-blue);
-            border-radius: 2px 2px 0 0;
-        }
-        .tab-content { display: none; animation: fadeSlide 0.3s ease; }
+        .tabs { display: flex; gap: 4px; padding-top: 14px; margin-bottom: 0; border-bottom: 1px solid var(--sep); }
+        .tab-btn { padding: 12px 18px; background: transparent; border: none; color: var(--text-2); cursor: pointer; font-size: 0.88em; font-weight: 500; transition: color 0.2s ease; position: relative; font-family: var(--font-sans); letter-spacing: -0.01em; }
+        .tab-btn:hover { color: var(--text-1); }
+        .tab-btn.active { color: var(--text-1); font-weight: 600; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 18px; right: 18px; height: 2px; background: var(--blue); border-radius: 2px 2px 0 0; }
+        .tab-content { display: none; animation: fadeSlide 0.25s ease; }
         .tab-content.active { display: block; }
-        @keyframes fadeSlide {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ── DOWNLOAD BUTTON ── */
-        .download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 10px 18px;
-            background: var(--bg-tertiary);
-            color: var(--accent-blue);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-        .download-btn:hover {
-            background: var(--accent-blue);
-            color: white;
-            border-color: var(--accent-blue);
-            text-decoration: none;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
-        }
+        /* ── LOADING ── */
+        .loading-overlay { display: none; flex-direction: column; align-items: center; gap: 14px; padding: 48px 0; }
+        .loading-overlay.visible { display: flex; }
+        .spinner { width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid var(--sep-strong); border-top-color: var(--blue); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--text-2); font-size: 0.88em; }
 
-        /* ── PULSE ANIMATION FOR ANALYZE BUTTON ── */
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0.4); }
-            50% { box-shadow: 0 0 0 8px rgba(35, 134, 54, 0); }
-        }
-        .btn-primary:not(:disabled) { animation: pulse 2s infinite; }
-        .btn-primary:disabled { animation: none; }
+        .result-container { display: none; margin-top: 32px; }
+        .result-container.visible { display: block; animation: fadeSlide 0.35s ease; }
 
-        /* ── IMPROVED BADGES ── */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-primary);
-            padding: 7px 16px;
-            border-radius: 24px;
-            font-size: 0.85em;
-            color: var(--text-secondary);
-            font-weight: 500;
-            transition: all 0.2s ease;
+        .download-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--bg-panel-2); color: var(--blue); border: 1px solid var(--sep); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.82em; font-weight: 600; text-decoration: none; transition: all 0.15s ease; }
+        .download-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); text-decoration: none; }
+
+        /* ── RESULT SHELL ── */
+        .result-card { background: var(--bg-panel); border: 1px solid var(--sep); border-radius: var(--radius-xl); overflow: hidden; box-shadow: 0 24px 70px -24px rgba(0,0,0,0.7); }
+
+        /* ── HERO: activity-ring style score ── */
+        .result-hero { padding: 44px 32px 34px; text-align: center; border-bottom: 1px solid var(--sep); background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); }
+        .ring-wrap { position: relative; width: 148px; height: 148px; margin: 0 auto 16px; }
+        .ring-wrap svg { transform: rotate(-90deg); }
+        .ring-track { fill: none; stroke: rgba(120,120,128,0.24); stroke-width: 10; }
+        .ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1); }
+        .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-number { font-size: 2.5em; font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+        .score-out-of { font-size: 0.68em; font-weight: 500; color: var(--text-3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .risk-level-text { font-size: 1.05em; font-weight: 700; margin-top: 4px; letter-spacing: -0.01em; }
+        .risk-summary { color: var(--text-2); margin-top: 12px; font-size: 0.92em; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.55; font-weight: 400; }
+
+        /* ── META BAR ── */
+        .meta-bar { display: flex; justify-content: center; align-items: center; gap: 22px; padding: 12px 24px; border-bottom: 1px solid var(--sep); flex-wrap: wrap; font-size: 0.78em; font-weight: 500; color: var(--text-3); }
+        .meta-bar span { display: inline-flex; align-items: center; gap: 5px; }
+        .meta-bar a { color: var(--blue); font-weight: 600; text-decoration: none; }
+        .meta-bar a:hover { text-decoration: underline; }
+
+        .result-body { padding: 26px 24px 28px; }
+        .section-label { font-size: 0.72em; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin: 24px 4px 8px; }
+        .section-label:first-child { margin-top: 0; }
+
+        /* ── GROUPED INSET ROWS (Settings.app pattern) ── */
+        .group { background: var(--bg-row); border: 1px solid var(--sep); border-radius: var(--radius-lg); overflow: hidden; }
+        .group + .group { margin-top: 14px; }
+        .group-header { display: flex; align-items: center; gap: 9px; padding: 13px 16px; border-bottom: 1px solid var(--sep); background: var(--bg-row-alt); }
+        .group-header .service-icon { font-size: 1.05em; line-height: 1; }
+        .group-header h4 { font-size: 0.86em; font-weight: 600; color: var(--text-1); margin: 0; letter-spacing: -0.005em; }
+        .group-header .group-sub { margin-left: auto; font-size: 0.76em; color: var(--text-3); font-family: var(--font-mono); }
+
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; font-size: 0.86em; border-bottom: 1px solid var(--sep); gap: 16px; }
+        .row:last-child { border-bottom: none; }
+        .row .label { color: var(--text-2); font-weight: 400; flex-shrink: 0; }
+        .row .value { font-weight: 600; color: var(--text-1); text-align: right; word-break: break-word; }
+        .row .value.mono { font-family: var(--font-mono); font-size: 0.92em; font-weight: 400; letter-spacing: 0; }
+        .row .value.danger { color: var(--red); }
+        .row .value.warning { color: var(--orange); }
+        .row .value.success { color: var(--green); }
+
+        .row-bar-track { padding: 12px 16px 14px; }
+        .row-bar-track .row-bar-label { display: flex; justify-content: space-between; font-size: 0.8em; color: var(--text-2); margin-bottom: 7px; }
+        .row-bar { height: 6px; background: rgba(120,120,128,0.24); border-radius: 3px; overflow: hidden; }
+        .row-bar-fill { height: 100%; border-radius: 3px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
+        .row-bar-fill.danger { background: var(--red); }
+        .row-bar-fill.warning { background: var(--orange); }
+        .row-bar-fill.success { background: var(--green); }
+        .row-bar-fill.info { background: var(--blue); }
+
+        .group-link { display: block; padding: 11px 16px; font-size: 0.8em; color: var(--blue); text-decoration: none; font-weight: 500; border-top: 1px solid var(--sep); }
+        .group-link:hover { background: var(--blue-dim); }
+
+        /* ── INDICATOR CHIPS ── */
+        .indicator-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 16px; }
+        .indicator-chip { background: var(--red-dim); color: var(--red); padding: 6px 14px; border-radius: 100px; font-size: 0.78em; font-weight: 500; border: 1px solid rgba(255,69,58,0.22); }
+
+        /* ── ACTION LIST ── */
+        .action-list { padding: 6px 0; }
+        .action-item { display: flex; align-items: flex-start; gap: 12px; padding: 11px 16px; font-size: 0.86em; color: var(--text-1); font-weight: 400; border-bottom: 1px solid var(--sep); }
+        .action-item:last-child { border-bottom: none; }
+        .action-num { color: var(--blue); font-weight: 700; min-width: 18px; font-variant-numeric: tabular-nums; }
+
+        /* ── RAW / MONO BLOCK (for extracted content) ── */
+        .mono-block { font-family: var(--font-mono); font-size: 0.8em; color: var(--text-2); background: var(--bg-row-alt); padding: 14px 16px; white-space: pre-wrap; word-break: break-word; line-height: 1.6; max-height: 260px; overflow-y: auto; }
+
+        .analysis-id { text-align: center; color: var(--text-3); font-size: 0.68em; margin-top: 20px; font-family: var(--font-mono); letter-spacing: 0.02em; }
+
+        .footer { text-align: center; padding: 32px 24px 40px; color: var(--text-3); font-size: 0.8em; }
+        .footer p { margin: 3px 0; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
         }
-        .badge:hover {
-            border-color: var(--accent-blue);
-            color: var(--text-primary);
-            transform: translateY(-1px);
+        @media (max-width: 640px) {
+            .header h1 { font-size: 2em; }
+            .container { padding: 40px 16px 60px; }
+            .card { padding: 6px 16px 18px; }
         }
     </style>
 </head>
 <body>
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- NAVIGATION -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
     <nav class="navbar">
         <div class="navbar-inner">
-            <a href="/" class="navbar-brand">
-                <span class="icon">&#x1F6E1;&#xFE0F;</span> Phishing Guardian
-            </a>
+            <a href="/" class="navbar-brand"><span class="icon">🛡️</span> Phishing Guardian</a>
             <ul class="navbar-nav">
-                <li><a href="/" class="active">&#x1F50D; Analyze</a></li>
-                <li><a href="/history">&#x1F4CA; History</a></li>
-                <li><a href="/docs">&#x1F4D6; API Docs</a></li>
+                <li><a href="/" class="active">Analyze</a></li>
+                <li><a href="/history">History</a></li>
+                <li><a href="/docs">API Docs</a></li>
             </ul>
         </div>
     </nav>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- MAIN CONTENT -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
     <main class="container">
-        <!-- Header -->
         <div class="header">
-            <h1>&#x1F6E1;&#xFE0F; Phishing Guardian</h1>
-            <p>Analyze suspicious emails or files with six threat intelligence sources. Completely free.</p>
+            <h1>Phishing Guardian</h1>
+            <p>Six threat intelligence sources. Every finding traced back to its evidence.</p>
             <div class="badges">
-                <span class="badge">&#x1F9E0; 4 + Threat Intel Sources</span>
-                <span class="badge">&#x1F31F; 100% Free</span>
-                <span class="badge">&#x26A1; Instant Results</span>
-                <span class="badge">&#x1F510; Privacy Focused</span>
+                <span class="badge">6 Threat Intel Sources</span>
+                <span class="badge">100% Free</span>
+                <span class="badge">Full Evidence</span>
+                <span class="badge">PDF Reports</span>
             </div>
         </div>
 
-        <!-- Analysis Card -->
         <div class="card">
-            <!-- Tabs -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('email')">&#x1F4E7; Email Analysis</button>
-                <button class="tab-btn" onclick="switchTab('file')">&#x1F4CE; File Analysis</button>
+                <button class="tab-btn active" onclick="switchTab('email')">Email Analysis</button>
+                <button class="tab-btn" onclick="switchTab('file')">File Analysis</button>
             </div>
-
-            <!-- EMAIL TAB -->
             <div id="emailTab" class="tab-content active" style="padding-top:20px;">
                 <div class="form-group">
-                    <textarea id="emailInput" placeholder="Paste the complete email here, including all headers...
-
-Example:
-From: security@paypa1.com
-To: user@company.com
-Subject: URGENT: Your Account Has Been Suspended
-Date: Mon, 15 Jan 2025 09:00:00 +0000
-Content-Type: text/plain
-
-Dear Customer,
-Your account has been suspended. Click here to verify:
-https://paypa1.com/verify
-
-──────────────────────────────────────────────
-Tip: Press Ctrl+Enter to analyze quickly."></textarea>
+                    <textarea id="emailInput" placeholder="Paste the complete email here, including all headers...&#10;&#10;From: security@microsfot-secure.com&#10;To: victim@company.com&#10;Subject: URGENT: Unusual Sign-In Activity&#10;&#10;Dear User,&#10;We detected unusual activity. Verify here:&#10;https://microsfot-secure.com/verify&#10;&#10;Tip: Ctrl+Enter to analyze"></textarea>
                 </div>
                 <div class="btn-group">
-                    <button id="analyzeBtn" class="btn btn-primary" onclick="analyzeEmail()">&#x1F50D; Analyze Email</button>
-                    <button id="clearBtn" class="btn btn-secondary" onclick="clearAll()">&#x1F5D1;&#xFE0F; Clear</button>
+                    <button id="analyzeBtn" class="btn btn-primary" onclick="analyzeEmail()">Analyze Email</button>
+                    <button id="clearBtn" class="btn btn-secondary" onclick="clearAll()">Clear</button>
                 </div>
             </div>
-
-            <!-- FILE TAB -->
             <div id="fileTab" class="tab-content" style="padding-top:20px;">
-                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                    <div class="icon">&#x1F4E4;</div>
+                <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="Upload a file to analyze" onclick="document.getElementById('fileInput').click()" onkeydown="if(event.key==='Enter'||event.key===' '){document.getElementById('fileInput').click();}">
+                    <div class="icon">📤</div>
                     <p><strong>Click to upload</strong> or drag &amp; drop a file here</p>
-                    <p class="supported-types">
-                        &#x1F4C4; PDF &bull; &#x1F4D1; DOCX &bull; &#x1F4CA; XLSX &bull; &#x1F4E6; ZIP &bull; &#x2699;&#xFE0F; EXE &bull; &#x1F4E7; EML &bull; and more
-                    </p>
+                    <p class="supported-types">PDF · DOCX · XLSX · ZIP · EXE · EML · More</p>
                     <p class="supported-types">Maximum file size: 10 MB</p>
                 </div>
-                <input type="file" id="fileInput" style="display:none" 
-                       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.exe,.dll,.eml,.msg,.bat,.ps1,.vbs,.js"
-                       onchange="handleFileSelect(event)">
+                <input type="file" id="fileInput" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.exe,.dll,.eml,.msg,.bat,.ps1,.vbs,.js" onchange="handleFileSelect(event)">
                 <div id="fileInfo">
-                    <span class="file-icon">&#x1F4C4;</span>
+                    <span class="file-icon">📄</span>
                     <span class="file-name" id="fileName"></span>
                     <span class="file-size" id="fileSize"></span>
-                    <button class="remove-file" onclick="removeFile()">&#x2715;</button>
+                    <button class="remove-file" onclick="removeFile()" aria-label="Remove selected file">✕</button>
                 </div>
                 <div class="btn-group">
-                    <button id="analyzeFileBtn" class="btn btn-primary" onclick="analyzeFile()" disabled>&#x1F50D; Analyze File</button>
+                    <button id="analyzeFileBtn" class="btn btn-primary" onclick="analyzeFile()" disabled>Analyze File</button>
                 </div>
             </div>
         </div>
 
-        <!-- Loading -->
-        <div id="loadingOverlay" class="loading-overlay">
+        <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite">
             <div class="spinner"></div>
-            <p class="loading-text" id="loadingText">Analyzing with six threat intelligence sources&#x2026;</p>
+            <p class="loading-text">Analyzing with six threat intelligence sources…</p>
         </div>
 
-        <!-- Results -->
-        <div id="resultContainer" class="result-container">
+        <div id="resultContainer" class="result-container" aria-live="polite">
             <div id="resultContent"></div>
         </div>
     </main>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- FOOTER -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
     <footer class="footer">
-        <p>Phishing Guardian v1.0.0 &bull; Built by WORM&bull; MIT License</p>
-        <p>Powered by VirusTotal, AbuseIPDB, PhishTank, OpenPhish, URLScan.io, and WHOIS </p>
+        <p>Phishing Guardian v1.0.0 · Built by WORM · MIT License</p>
+        <p>Powered by VirusTotal, AbuseIPDB, PhishTank, OpenPhish, URLScan.io, and WHOIS</p>
     </footer>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCRIPTS -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
     <script>
         // ===================================================================
-        // PHISHING GUARDIAN — ALL FUNCTIONS (SELF-CONTAINED)
+        // PHISHING GUARDIAN — RESULT RENDERING
         // ===================================================================
-
         let selectedFile = null;
 
-        // ---- TABS ----
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            if (tab === 'email') {
-                document.querySelector('.tab-btn:first-child').classList.add('active');
-                document.getElementById('emailTab').classList.add('active');
-            } else {
-                document.querySelector('.tab-btn:last-child').classList.add('active');
-                document.getElementById('fileTab').classList.add('active');
-            }
+        // Severity → color token map (mirrors iOS system colors)
+        const LCFG = {
+            critical: { c: 'var(--red)',    ring: 'var(--red)',    icon: '⚠️' },
+            high:     { c: 'var(--orange)', ring: 'var(--orange)', icon: '⚠️' },
+            medium:   { c: 'var(--orange)', ring: 'var(--orange)', icon: '⚡' },
+            low:      { c: 'var(--blue)',   ring: 'var(--blue)',   icon: 'ℹ️' },
+            safe:     { c: 'var(--green)',  ring: 'var(--green)',  icon: '✅' }
+        };
+
+        const $ = id => document.getElementById(id);
+        function esc(t) { if (t === null || t === undefined || t === '') return ''; const d = document.createElement('div'); d.textContent = String(t); return d.innerHTML; }
+        function formatSize(b) { if (!b) return '0 B'; if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
+        function formatDate(v) { if (!v) return 'Unknown'; try { const d = new Date(v); if (isNaN(d.getTime())) return esc(v); return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (_) { return esc(v); } }
+
+        // Renders the SVG activity-ring hero used for both email and file results
+        function ringHero(score, level, icon, title, subtitle) {
+            const cfg = LCFG[level] || LCFG.safe;
+            const r = 64, c = 2 * Math.PI * r;
+            const pct = Math.max(0, Math.min(100, score));
+            const offset = c - (pct / 100) * c;
+            return `
+            <div class="result-hero">
+                <div class="ring-wrap">
+                    <svg width="148" height="148" viewBox="0 0 148 148">
+                        <circle class="ring-track" cx="74" cy="74" r="${r}"></circle>
+                        <circle class="ring-fill" cx="74" cy="74" r="${r}" stroke="${cfg.ring}"
+                            stroke-dasharray="${c}" stroke-dashoffset="${c}"
+                            style="stroke-dashoffset:${offset}"></circle>
+                    </svg>
+                    <div class="ring-center">
+                        <div class="score-number" style="color:${cfg.c};">${score}</div>
+                        <div class="score-out-of">/ 100</div>
+                    </div>
+                </div>
+                <div class="risk-level-text" style="color:${cfg.c};">${icon} ${esc(title)}</div>
+                <div class="risk-summary">${esc(subtitle)}</div>
+            </div>`;
+        }
+
+        function switchTab(t) {
+            document.querySelectorAll('.tab-btn,.tab-content').forEach(e => e.classList.remove('active'));
+            t === 'email' ? $('emailTab').classList.add('active') : $('fileTab').classList.add('active');
+            document.querySelector(`.tab-btn${t === 'email' ? ':first-child' : ':last-child'}`).classList.add('active');
             hideResult();
         }
-
-        // ---- FILE HANDLING ----
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            selectedFile = file;
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = formatFileSize(file.size);
-            document.getElementById('fileInfo').classList.add('visible');
-            document.getElementById('analyzeFileBtn').disabled = false;
-            document.getElementById('dropZone').style.display = 'none';
+        function handleFileSelect(e) {
+            const f = e.target.files[0]; if (!f) return;
+            selectedFile = f;
+            $('fileName').textContent = f.name;
+            $('fileSize').textContent = formatSize(f.size);
+            $('fileInfo').classList.add('visible');
+            $('analyzeFileBtn').disabled = false;
+            $('dropZone').style.display = 'none';
         }
-
-        function removeFile() {
-            selectedFile = null;
-            document.getElementById('fileInput').value = '';
-            document.getElementById('fileInfo').classList.remove('visible');
-            document.getElementById('analyzeFileBtn').disabled = true;
-            document.getElementById('dropZone').style.display = 'block';
-        }
-
-        function formatFileSize(bytes) {
-            if (!bytes) return '0 B';
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / 1048576).toFixed(1) + ' MB';
-        }
-
-        // ---- DRAG AND DROP ----
-        const dropZone = document.getElementById('dropZone');
-        if (dropZone) {
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-            dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file) {
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    document.getElementById('fileInput').files = dt.files;
-                    handleFileSelect({ target: { files: dt.files } });
-                }
+        function removeFile() { selectedFile = null; $('fileInput').value = ''; $('fileInfo').classList.remove('visible'); $('analyzeFileBtn').disabled = true; $('dropZone').style.display = 'block'; }
+        (function () {
+            const dz = $('dropZone'); if (!dz) return;
+            dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+            dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+            dz.addEventListener('drop', e => {
+                e.preventDefault(); dz.classList.remove('dragover');
+                const f = e.dataTransfer.files[0];
+                if (f) { const dt = new DataTransfer(); dt.items.add(f); $('fileInput').files = dt.files; handleFileSelect({ target: { files: dt.files } }); }
             });
+        })();
+
+        function showLoading(s) { $('loadingOverlay').classList.toggle('visible', s); }
+        function hideResult() { $('resultContainer').classList.remove('visible'); }
+        function clearAll() { $('emailInput').value = ''; removeFile(); hideResult(); showLoading(false); }
+
+        async function postAnalyze(fd) {
+            const r = await fetch('/api/v1/analyze', { method: 'POST', body: fd });
+            if (!r.ok) {
+                const e = await r.json().catch(() => ({}));
+                throw new Error(e.detail?.message || e.detail?.error || `Request failed (${r.status})`);
+            }
+            return r.json();
         }
 
-        // ---- EMAIL ANALYSIS ----
         async function analyzeEmail() {
-            const email = document.getElementById('emailInput')?.value;
-            if (!email || !email.trim()) { alert('Please paste an email first'); return; }
-            const btn = document.getElementById('analyzeBtn');
-            if (btn) { btn.disabled = true; btn.textContent = '\u23F3 Analyzing\u2026'; }
+            const v = $('emailInput')?.value?.trim();
+            if (!v) return showError('Paste an email before analyzing — headers and body are both used for detection.');
+            const b = $('analyzeBtn'); if (b) { b.disabled = true; b.textContent = 'Analyzing…'; }
             showLoading(true); hideResult();
             try {
-                const fd = new FormData(); fd.append('raw_email', email);
-                const r = await fetch('/api/v1/analyze', { method: 'POST', body: fd });
-                if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.detail?.message || e.detail?.error || 'Analysis failed'); }
-                renderResult(await r.json());
-            } catch(e) { showError(e.message); }
-            finally { if (btn) { btn.disabled = false; btn.innerHTML = '&#x1F50D; Analyze Email'; } showLoading(false); }
+                const fd = new FormData(); fd.append('raw_email', v);
+                renderResult(await postAnalyze(fd));
+            } catch (e) { showError(e.message); }
+            finally { if (b) { b.disabled = false; b.textContent = 'Analyze Email'; } showLoading(false); }
         }
 
-        // ---- FILE ANALYSIS ----
         async function analyzeFile() {
-            if (!selectedFile) { alert('Select a file first'); return; }
-            const btn = document.getElementById('analyzeFileBtn');
-            btn.disabled = true; btn.innerHTML = '&#x23F3; Analyzing&#x2026;';
-            document.getElementById('loadingText').textContent = 'Analyzing file with threat intelligence\u2026';
+            if (!selectedFile) return showError('Select a file before analyzing.');
+            const b = $('analyzeFileBtn'); b.disabled = true; b.textContent = 'Analyzing…';
             showLoading(true); hideResult();
             try {
                 const fd = new FormData(); fd.append('uploaded_file', selectedFile);
-                const r = await fetch('/api/v1/analyze', { method: 'POST', body: fd });
-                if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.detail?.message || e.detail?.error || 'Analysis failed'); }
-                const data = await r.json();
-                data.analysis_type === 'file' ? renderFileResult(data) : renderResult(data);
-            } catch(e) { showError(e.message); }
-            finally { btn.disabled = false; btn.innerHTML = '&#x1F50D; Analyze File'; showLoading(false); }
+                const d = await postAnalyze(fd);
+                d.analysis_type === 'file' ? renderFileResult(d) : renderResult(d);
+            } catch (e) { showError(e.message); }
+            finally { b.disabled = false; b.textContent = 'Analyze File'; showLoading(false); }
         }
 
-        // ---- RENDER EMAIL RESULT ----
-        function renderResult(data) {
-            const risk = data.risk_assessment || {};
-            const score = risk.overall_score ?? 0;
-            const level = (risk.risk_level || 'SAFE').toLowerCase();
-            const levelColors = { critical: '#f85149', high: '#f0883e', medium: '#d29922', low: '#58a6ff', safe: '#3fb950' };
-            const color = levelColors[level] || '#8b949e';
+        // ---- shared row/group builders ----
+        function row(label, value, cls = '', mono = false) {
+            return `<div class="row"><span class="label">${esc(label)}</span><span class="value ${cls}${mono ? ' mono' : ''}">${value}</span></div>`;
+        }
+        function rowBar(label, pct, cls) {
+            return `<div class="row-bar-track"><div class="row-bar-label"><span>${esc(label)}</span><span>${pct}%</span></div><div class="row-bar"><div class="row-bar-fill ${cls}" style="width:${Math.max(0,Math.min(100,pct))}%"></div></div></div>`;
+        }
+        function group(icon, title, sub, rowsHtml, linkHtml = '') {
+            return `<div class="group">
+                <div class="group-header"><span class="service-icon">${icon}</span><h4>${esc(title)}</h4>${sub ? `<span class="group-sub">${esc(sub)}</span>` : ''}</div>
+                ${rowsHtml}
+                ${linkHtml}
+            </div>`;
+        }
 
-            let html = `<div class="result-card ${level}">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
-                    <div style="flex:1;min-width:200px;">
-                        <div class="score-display score-${level}">
-                            <div class="score-number" style="color:${color}">${score}<span style="font-size:0.35em;color:var(--text-muted)">/100</span></div>
-                            <div class="score-label" style="color:${color}">${risk.risk_level||'UNKNOWN'}</div>
-                        </div>
-                    </div>
-                    <a href="/api/v1/report/${data.analysis_id}" class="download-btn" download>&#x1F4E5; Download PDF</a>
+        // ---- EMAIL evidence groups (threat-intel sources) ----
+        function buildEvidenceGroups(d, sev, es, bd) {
+            let out = '';
+
+            // Email details first — the actual content being judged, front and center
+            if (es.subject || es.sender) {
+                out += `<div class="section-label">Email Details</div>`;
+                out += group('✉️', 'Message', '', [
+                    row('Subject', esc(es.subject || '—')),
+                    row('From', esc(es.sender || '—')),
+                    row('Sender domain', esc(es.sender_domain || '—'), '', true),
+                    row('Reply-To', esc(es.reply_to || '—')),
+                    row('URLs found', es.urls_found ?? 0),
+                    row('Attachments found', es.attachments_found ?? 0)
+                ].join(''));
+            }
+
+            out += `<div class="section-label">Threat Intelligence</div>`;
+
+            const vt = sev.virustotal || {};
+            if (vt.checked) {
+                const pct = vt.total_engines > 0 ? Math.round((vt.malicious || 0) / vt.total_engines * 100) : 0;
+                const rows = [
+                    row('Detections', `${vt.malicious || 0} / ${vt.total_engines || 0} engines`, vt.malicious > 0 ? 'danger' : 'success'),
+                    row('Suspicious', vt.suspicious || 0, 'warning'),
+                    row('Harmless', vt.harmless || 0, 'success'),
+                    rowBar('Engine flag rate', pct, vt.malicious > 0 ? 'danger' : 'success')
+                ].join('');
+                const link = vt.analysis_id ? `<a class="group-link" href="https://www.virustotal.com/gui/url/${vt.analysis_id}" target="_blank" rel="noopener">View full report on VirusTotal →</a>` : '';
+                out += group('🦠', 'VirusTotal', '', rows, link);
+            }
+
+            (sev.abuseipdb || []).forEach(ip => {
+                const s = ip.abuse_confidence_score || 0;
+                const rows = [
+                    row('Abuse confidence', `${s}%`, s > 50 ? 'danger' : s > 20 ? 'warning' : 'success'),
+                    row('Total reports', ip.total_reports || 0),
+                    row('Country', esc(ip.country || 'Unknown')),
+                    row('ISP', esc(ip.isp || 'Unknown')),
+                    ip.last_reported_at ? row('Last reported', formatDate(ip.last_reported_at)) : '',
+                    rowBar('Confidence score', s, s > 50 ? 'danger' : s > 20 ? 'warning' : 'success')
+                ].join('');
+                out += group('📍', `AbuseIPDB`, esc(ip.ip || ''), rows);
+            });
+
+            (sev.whois || []).forEach(w => {
+                const rows = [
+                    w.lookalike_brand ? row('Lookalike domain', `Mimics ${esc(w.lookalike_brand)}`, 'danger') : '',
+                    row('Registrar', esc(w.registrar || 'Unknown')),
+                    row('Registered', formatDate(w.creation_date)),
+                    row('Domain age', `${w.age_days ?? '—'} days`, (w.age_days ?? 365) < 30 ? 'danger' : (w.age_days ?? 365) < 180 ? 'warning' : 'success'),
+                    row('Country', esc(w.country || 'Unknown')),
+                    (w.suspicious_indicators || []).length ? row('Flags', esc(w.suspicious_indicators.join(', ')), 'danger') : ''
+                ].join('');
+                out += group('🌐', 'WHOIS', esc(w.domain || ''), rows);
+            });
+
+            (sev.phishtank || []).forEach(p => {
+                const rows = [
+                    row('In database', p.found ? 'Yes' : 'No', p.found ? 'danger' : 'success'),
+                    p.found ? row('Verified', p.verified ? 'Confirmed phishing' : 'Unverified', p.verified ? 'danger' : 'warning') : '',
+                    p.found ? row('Phish ID', esc(p.phish_id || 'N/A'), '', true) : ''
+                ].join('');
+                out += group('🎣', 'PhishTank', '', rows);
+            });
+
+            (sev.openphish || []).forEach(o => {
+                out += group('🤖', 'OpenPhish AI', '', row('Detected', o.found ? 'Flagged' : 'Not in feed', o.found ? 'danger' : 'success'));
+            });
+
+            (sev.urlscan || []).forEach(u => {
+                const link = u.scan_id ? `<a class="group-link" href="https://urlscan.io/result/${u.scan_id}/" target="_blank" rel="noopener">View scan results →</a>` : '';
+                out += group('🔍', 'URLScan.io', '', row('Status', esc(u.status || 'Submitted')), link);
+            });
+
+            const hd = sev.headers || d.header_analysis || {};
+            const spfV = (hd.spf || 'UNKNOWN').toUpperCase(), dkimV = (hd.dkim || 'UNKNOWN').toUpperCase(), dmarcV = (hd.dmarc || 'UNKNOWN').toUpperCase();
+            const authRows = [
+                row('SPF', spfV, spfV === 'PASS' ? 'success' : 'danger'),
+                row('DKIM', dkimV, dkimV === 'PASS' ? 'success' : 'danger'),
+                row('DMARC', dmarcV, dmarcV === 'PASS' ? 'success' : 'danger'),
+                hd.reply_to_mismatch ? row('Reply-To mismatch', 'Detected', 'danger') : '',
+                hd.sender_spoofed ? row('Sender spoofing', 'Detected', 'danger') : ''
+            ].join('');
+            out += group('📧', 'Email Authentication', '', authRows);
+
+            out += `<div class="section-label">Score Breakdown</div>`;
+            const scoreRows = [
+                ['URL analysis', bd.url_score || 0, 'info'],
+                ['Header analysis', bd.header_score || 0, 'info'],
+                ['Domain analysis', bd.domain_score || 0, 'info'],
+                ['Attachment analysis', bd.attachment_score || 0, 'warning'],
+                ['Heuristic analysis', bd.heuristic_score || 0, 'danger'],
+                ['IP analysis', bd.ip_score || 0, 'info']
+            ].map(([l, v, c]) => rowBar(l, v, c)).join('');
+            out += `<div class="group">${scoreRows}</div>`;
+
+            return out;
+        }
+
+        function renderResult(d) {
+            const risk = d.risk_assessment || {}, score = risk.overall_score ?? 0, level = (risk.risk_level || 'SAFE').toLowerCase(), cfg = LCFG[level] || LCFG.safe;
+            const bd = risk.score_breakdown || {}, srcs = d.sources_checked || [], es = d.email_summary || {}, sev = d.service_evidence || {};
+            const inds = risk.suspicious_indicators || [], acts = risk.recommended_actions || [];
+
+            let extras = '';
+            if (inds.length) extras += `<div class="section-label">Suspicious Indicators</div><div class="group"><div class="indicator-chips">${inds.map(i => `<span class="indicator-chip">${esc(i)}</span>`).join('')}</div></div>`;
+            if (acts.length) extras += `<div class="section-label">Recommended Actions</div><div class="group"><div class="action-list">${acts.map((a, i) => `<div class="action-item"><span class="action-num">${i + 1}</span>${esc(a)}</div>`).join('')}</div></div>`;
+
+            const html = `
+            <div class="result-card">
+                ${ringHero(score, level, cfg.icon, `${risk.risk_level || 'UNKNOWN'} Risk`, risk.summary || '')}
+                <div class="meta-bar">
+                    <span>${srcs.length} sources checked</span><span>${risk.confidence || 'LOW'} confidence</span><span>${d.analysis_time_seconds || 0}s</span>
+                    <a href="/api/v1/report/${d.analysis_id}">Download PDF →</a>
                 </div>
-                <div class="result-summary">${esc(risk.summary||'')}</div>
-                <div class="result-meta">
-                    <span>&#x1F50D; ${(data.sources_checked||[]).length} sources</span>
-                    <span>&#x1F4CA; ${risk.confidence||'LOW'} confidence</span>
-                    <span>&#x23F1; ${data.analysis_time_seconds||0}s</span>
-                </div>
-                ${(risk.suspicious_indicators||[]).length>0?`<div class="result-section"><h3>&#x1F534; Suspicious Indicators</h3><ul class="indicator-danger">${risk.suspicious_indicators.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`:''}
-                ${(risk.recommended_actions||[]).length>0?`<div class="result-section"><h3>&#x1F4CB; Recommended Actions</h3><ul>${risk.recommended_actions.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`:''}
-                <div class="result-section"><h3>&#x1F4CA; Score Breakdown</h3><ul>
-                    <li>&#x1F517; URL Analysis: <strong>${(risk.score_breakdown||{}).url_score ?? 0}</strong></li>
-                    <li>&#x1F4E7; Header Analysis: <strong>${(risk.score_breakdown||{}).header_score ?? 0}</strong></li>
-                    <li>&#x1F310; Domain Analysis: <strong>${(risk.score_breakdown||{}).domain_score ?? 0}</strong></li>
-                    <li>&#x1F4CE; Attachment: <strong>${(risk.score_breakdown||{}).attachment_score ?? 0}</strong></li>
-                    <li>&#x1F9E0; Heuristic: <strong>${(risk.score_breakdown||{}).heuristic_score ?? 0}</strong></li>
-                    <li>&#x1F4CD; IP Analysis: <strong>${(risk.score_breakdown||{}).ip_score ?? 0}</strong></li>
-                </ul></div>
-                ${data.email_summary?.subject ? `<div class="result-section"><h3>&#x1F4E7; Email Details</h3><ul>
-                    <li>Subject: ${esc(data.email_summary.subject)}</li>
-                    <li>From: ${esc(data.email_summary.sender||'N/A')}</li>
-                    <li>Domain: ${esc(data.email_summary.sender_domain||'N/A')}</li>
-                    <li>URLs Found: ${data.email_summary.urls_found ?? 0}</li>
-                    <li>Attachments: ${data.email_summary.attachments_found ?? 0}</li>
-                </ul></div>` : ''}
-                <div style="text-align:center;color:var(--text-muted);font-size:0.75em;margin-top:16px;opacity:0.7;">
-                    Analysis ID: ${(data.analysis_id||'N/A').substring(0,8)}...
+                <div class="result-body">
+                    ${extras}
+                    ${buildEvidenceGroups(d, sev, es, bd)}
+                    <div class="analysis-id">${esc((d.analysis_id || '').substring(0, 16))}</div>
                 </div>
             </div>`;
-            document.getElementById('resultContent').innerHTML = html;
-            document.getElementById('resultContainer').classList.add('visible');
-            document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            $('resultContent').innerHTML = html;
+            $('resultContainer').classList.add('visible');
+            $('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // ---- RENDER FILE RESULT ----
-        function renderFileResult(data) {
-            const fa = data.file_analysis || {};
-            const level = (fa.risk_level||'SAFE').toLowerCase();
-            const score = fa.risk_score||0;
-            const vt = fa.virustotal||{};
-            const levelColors = { critical: '#f85149', high: '#f0883e', medium: '#d29922', low: '#58a6ff', safe: '#3fb950' };
-            const color = levelColors[level] || '#8b949e';
+        // ---- FILE result: full structured breakdown of what was found in the file ----
+        function renderFileResult(d) {
+            const fa = d.file_analysis || {};
+            const level = (fa.risk_level || 'SAFE').toLowerCase(), cfg = LCFG[level] || LCFG.safe, score = fa.risk_score || 0;
+            const vt = fa.virustotal || {};
 
-            let html = `<div class="result-card ${level}">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
-                    <div style="flex:1;min-width:200px;">
-                        <div class="score-display score-${level}">
-                            <div class="score-number" style="color:${color}">${score}<span style="font-size:0.35em;color:var(--text-muted)">/100</span></div>
-                            <div class="score-label" style="color:${color}">${fa.risk_level||'UNKNOWN'}</div>
-                        </div>
-                    </div>
-                    <a href="/api/v1/report/${data.analysis_id}" class="download-btn" download>&#x1F4E5; Download PDF</a>
+            let body = '';
+
+            // File identity — this is the "properly mentioned" file content block:
+            // name, type, size, timestamps, and every hash the backend returned.
+            body += `<div class="section-label">File Details</div>`;
+            body += group('📄', esc(fa.filename || 'Unknown file'), fa.file_type || '', [
+                row('File name', esc(fa.filename || 'Unknown'), '', true),
+                row('File type', esc(fa.file_type || fa.mime_type || 'Unknown')),
+                row('File size', formatSize(fa.file_size || 0)),
+                fa.analyzed_at ? row('Analyzed at', formatDate(fa.analyzed_at)) : '',
+                fa.sha256_hash ? row('SHA-256', esc(fa.sha256_hash), '', true) : '',
+                fa.sha1_hash ? row('SHA-1', esc(fa.sha1_hash), '', true) : '',
+                fa.md5_hash ? row('MD5', esc(fa.md5_hash), '', true) : ''
+            ].filter(Boolean).join(''));
+
+            // VirusTotal
+            if (vt.checked) {
+                const pct = vt.total > 0 ? Math.round((vt.malicious || 0) / vt.total * 100) : 0;
+                const rows = [
+                    row('Detections', `${vt.malicious || 0} / ${vt.total || 0} engines`, vt.malicious > 0 ? 'danger' : 'success'),
+                    vt.suspicious !== undefined ? row('Suspicious', vt.suspicious, 'warning') : '',
+                    rowBar('Engine flag rate', pct, vt.malicious > 0 ? 'danger' : 'success')
+                ].filter(Boolean).join('');
+                const link = vt.analysis_id ? `<a class="group-link" href="https://www.virustotal.com/gui/file/${esc(fa.sha256_hash || '')}" target="_blank" rel="noopener">View full report on VirusTotal →</a>` : '';
+                body += `<div class="section-label">Threat Intelligence</div>` + group('🦠', 'VirusTotal', '', rows, link);
+            }
+
+            // Document-specific structural findings (PDF / Office)
+            if (fa.pdf_analysis && fa.pdf_analysis.analyzed) {
+                const pa = fa.pdf_analysis;
+                const rows = [
+                    row('JavaScript', pa.has_javascript ? 'Detected' : 'None', pa.has_javascript ? 'danger' : 'success'),
+                    row('Auto-run actions', pa.has_openaction ? 'Detected' : 'None', pa.has_openaction ? 'danger' : 'success'),
+                    row('Embedded files', pa.has_embedded_files ? 'Detected' : 'None', pa.has_embedded_files ? 'danger' : 'success'),
+                    pa.page_count !== undefined ? row('Pages', pa.page_count) : '',
+                    pa.producer ? row('Producer', esc(pa.producer)) : ''
+                ].filter(Boolean).join('');
+                body += `<div class="section-label">Document Structure</div>` + group('📑', 'PDF Analysis', '', rows);
+            }
+            if (fa.office_analysis && fa.office_analysis.analyzed) {
+                const oa = fa.office_analysis;
+                const rows = [
+                    row('Macros', oa.has_macros ? 'Detected' : 'None', oa.has_macros ? 'danger' : 'success'),
+                    oa.has_macros && oa.macro_risk ? row('Macro risk', esc(oa.macro_risk), 'danger') : '',
+                    row('External links', oa.has_external_links ? 'Detected' : 'None', oa.has_external_links ? 'warning' : 'success'),
+                    row('Embedded objects', oa.embedded_object_count ?? 0, (oa.embedded_object_count || 0) > 0 ? 'warning' : 'success')
+                ].filter(Boolean).join('');
+                body += `<div class="section-label">Document Structure</div>` + group('📝', 'Office Document Analysis', '', rows);
+            }
+            if (fa.archive_analysis && fa.archive_analysis.analyzed) {
+                const ar = fa.archive_analysis;
+                const rows = [
+                    row('Files inside', ar.file_count ?? 0),
+                    row('Executables found', ar.executable_count ?? 0, (ar.executable_count || 0) > 0 ? 'danger' : 'success'),
+                    row('Password protected', ar.is_encrypted ? 'Yes' : 'No', ar.is_encrypted ? 'warning' : 'success'),
+                    (ar.suspicious_filenames || []).length ? row('Suspicious file names', esc(ar.suspicious_filenames.join(', ')), 'danger') : ''
+                ].filter(Boolean).join('');
+                body += `<div class="section-label">Archive Contents</div>` + group('🗜️', 'Archive Analysis', '', rows);
+            }
+
+            // Raw extracted text/strings, if the backend surfaces it — kept short & scrollable
+            if (fa.extracted_content) {
+                body += `<div class="section-label">Extracted Content</div><div class="group"><div class="mono-block">${esc(fa.extracted_content)}</div></div>`;
+            }
+
+            if ((fa.suspicious_indicators || []).length) {
+                body += `<div class="section-label">Suspicious Indicators</div><div class="group"><div class="indicator-chips">${fa.suspicious_indicators.map(i => `<span class="indicator-chip">${esc(i)}</span>`).join('')}</div></div>`;
+            }
+            if ((fa.recommended_actions || []).length) {
+                body += `<div class="section-label">Recommended Actions</div><div class="group"><div class="action-list">${fa.recommended_actions.map((a, i) => `<div class="action-item"><span class="action-num">${i + 1}</span>${esc(a)}</div>`).join('')}</div></div>`;
+            }
+
+            const html = `
+            <div class="result-card">
+                ${ringHero(score, level, '📄', `${fa.risk_level || 'UNKNOWN'} Risk`, `${esc(fa.filename || 'Unknown file')} · ${formatSize(fa.file_size || 0)}`)}
+                <div class="meta-bar">
+                    <span>${esc(fa.file_type || 'unknown type')}</span>
+                    ${vt.checked ? `<span>VT ${vt.malicious || 0}/${vt.total || 0}</span>` : ''}
+                    ${fa.sha256_hash ? `<span title="SHA-256">${esc(fa.sha256_hash.substring(0, 16))}…</span>` : ''}
                 </div>
-                <div class="result-summary">&#x1F4C4; ${esc(fa.filename||'Unknown')} (${formatFileSize(fa.file_size||0)})</div>
-                <div class="result-meta">
-                    <span>&#x1F4C1; ${fa.file_type||'unknown'}</span>
-                    ${vt.checked?`<span>&#x1F9A0; VT: ${vt.malicious}/${vt.total}</span>`:''}
-                    <span>&#x1F511; ${(fa.sha256_hash||'').substring(0,16)}...</span>
-                </div>`;
-            if ((fa.suspicious_indicators||[]).length>0) html += `<div class="result-section"><h3>&#x1F534; Indicators</h3><ul class="indicator-danger">${fa.suspicious_indicators.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
-            if ((fa.recommended_actions||[]).length>0) html += `<div class="result-section"><h3>&#x1F4CB; Actions</h3><ul>${fa.recommended_actions.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`;
-            if (fa.pdf_analysis&&fa.pdf_analysis.analyzed) {
-                const pa=fa.pdf_analysis;
-                html += `<div class="result-section"><h3>&#x1F4C4; PDF Analysis</h3><ul>
-                    <li>JavaScript: ${pa.has_javascript?'&#x26A0;&#xFE0F; <span style=\\"color:#f85149\\">DETECTED</span>':'&#x2705; None'}</li>
-                    <li>Auto Actions: ${pa.has_openaction?'&#x26A0;&#xFE0F; <span style=\\"color:#f85149\\">DETECTED</span>':'&#x2705; None'}</li>
-                    <li>Embedded Files: ${pa.has_embedded_files?'&#x26A0;&#xFE0F; <span style=\\"color:#f85149\\">DETECTED</span>':'&#x2705; None'}</li></ul></div>`;
-            }
-            html += `<div style="text-align:center;color:var(--text-muted);font-size:0.75em;margin-top:16px;opacity:0.7;">Analysis ID: ${(data.analysis_id||'N/A').substring(0,8)}...</div></div>`;
-            document.getElementById('resultContent').innerHTML = html;
-            document.getElementById('resultContainer').classList.add('visible');
-            document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                <div class="result-body">
+                    ${body}
+                    <div class="analysis-id">${esc((d.analysis_id || '').substring(0, 16))}</div>
+                </div>
+            </div>`;
+            $('resultContent').innerHTML = html;
+            $('resultContainer').classList.add('visible');
+            $('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // ---- ERROR ----
-        function showError(msg) {
-            document.getElementById('resultContent').innerHTML = `<div class="result-card critical"><div style="text-align:center;color:var(--accent-red);"><h3>&#x274C; Analysis Failed</h3><p>${esc(msg)}</p></div></div>`;
-            document.getElementById('resultContainer').classList.add('visible');
+        function showError(m) {
+            $('resultContent').innerHTML = `
+            <div class="result-card" style="border-color: rgba(255,69,58,0.28);">
+                <div style="padding:48px 32px;text-align:center;">
+                    <div style="font-size:2.4em;">⚠️</div>
+                    <div style="font-size:1.1em;font-weight:700;color:var(--red);margin:10px 0 6px;">Analysis Failed</div>
+                    <div style="color:var(--text-2);font-size:0.9em;">${esc(m)}</div>
+                </div>
+            </div>`;
+            $('resultContainer').classList.add('visible');
+            $('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // ---- UI ----
-        function showLoading(s) { document.getElementById('loadingOverlay').classList.toggle('visible', s); }
-        function hideResult() { document.getElementById('resultContainer').classList.remove('visible'); }
-        function clearAll() { document.getElementById('emailInput').value=''; removeFile(); hideResult(); showLoading(false); }
-        function esc(t) { if(!t)return''; const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
-
-        // ---- KEYBOARD SHORTCUT ----
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
-                const activeTab = document.querySelector('.tab-content.active');
-                if (activeTab && activeTab.id === 'emailTab') analyzeEmail();
-                else if (activeTab && activeTab.id === 'fileTab') analyzeFile();
-            }
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'Enter') { document.querySelector('#emailTab.active') ? analyzeEmail() : analyzeFile(); }
         });
     </script>
 </body>
