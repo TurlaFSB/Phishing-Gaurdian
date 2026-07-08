@@ -243,6 +243,7 @@ pip install -r requirements.txt
 # Start the application
 python run.py
 Open http://localhost:8000 in any browser. Paste an email. Click Analyze.
+ or can use the live site through : https://phishing-gaurdian.onrender.com/
 
 That's it.
 
@@ -257,6 +258,7 @@ PhishTank	Community-verified phishing database	No	Unlimited	Built-in
 OpenPhish	AI-detected phishing URLs	No	Unlimited	Built-in
 URLScan.io	URL behavioral scanning	No	Unlimited	Built-in
 WHOIS	Domain registration & age	No	Unlimited	Built-in
+
 
 
 
