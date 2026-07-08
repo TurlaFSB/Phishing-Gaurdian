@@ -6,12 +6,13 @@ Advanced email parser that extracts every indicator of compromise.
 Handles MIME, encoded headers, nested attachments, and more.
 
 Author:  worm
-Version: 1.1.0 
+Version: 1.1.1
 ============================================================================
 """
 
 import re
 import hashlib
+import ipaddress
 import uuid
 import logging
 from email import policy as email_policy
@@ -88,7 +89,7 @@ class EmailParser:
     Extracts:
     - Headers (From, To, Subject, Date, SPF, DKIM, DMARC, Received chain)
     - URLs with domain analysis
-    - IP addresses
+    - IP addresses (body/subject AND Received-header hop IPs)
     - Attachments with hash computation
     - Email addresses
     - Body content (text and HTML) — attachment payloads are excluded
@@ -162,7 +163,14 @@ class EmailParser:
         # _extract_body — so attachment content can't masquerade as body
         # text or pollute urgency/greeting heuristics)
         body_text, body_html = self._extract_body(msg)
-        combined_text = f"{subject}\n{body_text}\n{self._strip_html(body_html)}"
+
+        # FIX: Received headers carry the actual mail-hop IPs (e.g. the
+        # attacker's sending server) and were previously never fed into the
+        # text blob that _extract_ips/_extract_urls/_extract_emails scan —
+        # they only ended up in `received_chain` on the output object,
+        # never analyzed. Pulling them into combined_text closes that gap.
+        received_text = "\n".join(msg.get_all("Received", []) or [])
+        combined_text = f"{subject}\n{received_text}\n{body_text}\n{self._strip_html(body_html)}"
 
         # Extract URLs
         urls = self._extract_urls(combined_text)
@@ -372,13 +380,32 @@ class EmailParser:
         )
 
     def _extract_ips(self, text: str) -> List[str]:
+        """Extract public, routable IPv4 addresses from text.
+
+        Private/reserved/loopback/link-local ranges are filtered out here
+        rather than left in the IOC list — once Received headers are fed
+        into combined_text, internal mail-relay hops (10.x, 192.168.x,
+        172.16-31.x, etc.) would otherwise show up mixed in with genuinely
+        attacker-controlled edge IPs, which is noisy for triage and, in a
+        shared/multi-tenant deployment, a minor internal-topology leak.
+        The full hop-by-hop path (including private IPs) is still
+        available separately via `received_chain` on ParsedEmail.
+        """
         ips = self.ip_pattern.findall(text)
         valid = []
         for ip in ips:
             parts = ip.split(".")
-            if all(0 <= int(p) <= 255 for p in parts):
-                if ip not in {"0.0.0.0", "255.255.255.255", "127.0.0.1", "::1"}:
-                    valid.append(ip)
+            if not all(0 <= int(p) <= 255 for p in parts):
+                continue
+            if ip in {"0.0.0.0", "255.255.255.255", "127.0.0.1", "::1"}:
+                continue
+            try:
+                addr = ipaddress.ip_address(ip)
+            except ValueError:
+                continue
+            if addr.is_private or addr.is_reserved or addr.is_loopback or addr.is_link_local or addr.is_multicast:
+                continue
+            valid.append(ip)
         return list(dict.fromkeys(valid))
 
     def _extract_emails(self, text: str) -> List[str]:
