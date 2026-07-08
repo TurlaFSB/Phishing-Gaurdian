@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center">Phishing Guardian</h1>
-<p align="center"><b>One click. Six intelligence sources. Under five seconds.</b></p>
+<p align="center"><b>One click. 4+ intelligence sources. Under five seconds.</b></p>
 <p align="center">Free. Open source. Built for the people who keep us safe.</p>
 
 ---
